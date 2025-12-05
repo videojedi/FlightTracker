@@ -1,17 +1,46 @@
-from time import sleep
+# Animation framework for Interstate 75 W
+# Adapted from original FlightTracker for MicroPython
 
-DELAY_DEFAULT = 0.01
+import time
+
+DELAY_DEFAULT = 0.1  # 100ms default delay
+
+# Global registry for keyframe metadata
+# MicroPython can have issues setting attributes on functions
+_keyframe_registry = {}
 
 
-class Animator(object):
-    class KeyFrame(object):
-        @staticmethod
-        def add(divisor, offset=0):
-            def wrapper(func):
-                func.properties = {"divisor": divisor, "offset": offset, "count": 0}
-                return func
+def keyframe(divisor, offset=0):
+    """
+    Decorator to mark a method as a keyframe.
 
-            return wrapper
+    Args:
+        divisor: Run method every N frames (0 = run once on reset)
+        offset: Frame offset before first run
+    """
+    def decorator(func):
+        # Use function name as key for the registry
+        key = func.__name__
+        _keyframe_registry[key] = {
+            "divisor": divisor,
+            "offset": offset,
+            "count": 0
+        }
+        return func
+    return decorator
+
+
+class Animator:
+    """
+    Keyframe-based animation system for MicroPython.
+
+    Uses decorator pattern to register methods that run at specific intervals.
+    Divisor determines how often a method runs (every N frames).
+    """
+
+    # Alias for backwards compatibility with @Animator.KeyFrame.add syntax
+    class KeyFrame:
+        add = staticmethod(keyframe)
 
     def __init__(self):
         self.keyframes = []
@@ -21,45 +50,54 @@ class Animator(object):
 
         self._register_keyframes()
 
-        super().__init__()
-
     def _register_keyframes(self):
-        # Some introspection to setup keyframes
+        """Find and register all methods that are keyframes"""
         for methodname in dir(self):
-            method = getattr(self, methodname)
-            if hasattr(method, "properties"):
-                self.keyframes.append(method)
+            if methodname in _keyframe_registry:
+                method = getattr(self, methodname)
+                if callable(method):
+                    self.keyframes.append((methodname, method))
+
+    def _get_props(self, name):
+        """Get keyframe properties by method name"""
+        return _keyframe_registry.get(name, {"divisor": 1, "offset": 0, "count": 0})
 
     def reset_scene(self):
-        for keyframe in self.keyframes:
-            if keyframe.properties["divisor"] == 0:
-                keyframe()
+        """Reset all keyframes with divisor == 0"""
+        for name, method in self.keyframes:
+            props = self._get_props(name)
+            if props["divisor"] == 0:
+                method()
 
     def play(self):
+        """Main animation loop - runs forever"""
         while True:
-            for keyframe in self.keyframes:
+            for name, method in self.keyframes:
+                props = self._get_props(name)
+
                 # If divisor == 0 then only run once on first loop
                 if self.frame == 0:
-                    if keyframe.properties["divisor"] == 0:
-                        keyframe()
+                    if props["divisor"] == 0:
+                        method()
 
                 # Otherwise perform normal operation
                 if (
                     self.frame > 0
-                    and keyframe.properties["divisor"]
+                    and props["divisor"]
                     and not (
-                        (self.frame - keyframe.properties["offset"])
-                        % keyframe.properties["divisor"]
+                        (self.frame - props["offset"])
+                        % props["divisor"]
                     )
                 ):
-                    if keyframe(keyframe.properties["count"]):
-                        keyframe.properties["count"] = 0
+                    result = method(props["count"])
+                    if result:
+                        props["count"] = 0
                     else:
-                        keyframe.properties["count"] += 1
+                        props["count"] += 1
 
             self._reset_scene = False
             self.frame += 1
-            sleep(self._delay)
+            time.sleep(self._delay)
 
     @property
     def delay(self):
@@ -68,21 +106,3 @@ class Animator(object):
     @delay.setter
     def delay(self, value):
         self._delay = value
-
-
-if __name__ == "__main__":
-
-    class Test(Animator):
-        @Animator.KeyFrame.add(5, 1)
-        def method1(self, frame):
-            print(f"method1 {frame}")
-
-        @Animator.KeyFrame.add(1, 1)
-        def method2(self, frame):
-            print(f"method2 {frame}")
-
-    myclass = Test(1)
-    myclass.run()
-
-    while 1:
-        sleep(5)

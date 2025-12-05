@@ -1,213 +1,181 @@
-# RBG Matrix Flight Tracker
+# FlightTracker for Interstate 75 W (RP2350)
 
-- 📖 [Blog post about this project](https://blog.colinwaddell.com/flight-tracker/)
-- ☢️ [Why you should **avoid** buying this pre-built from Flight Tracker LED](https://colinwaddell.com/articles/flight-tracker-led-ripoff-part-2-its-so-much-worse)
-  - They are being sold with a hidden backdoor allowing remote access to your home network
+A real-time flight tracking display for HUB75 LED matrices, running on the Pimoroni Interstate 75 W with RP2350.
 
-[![Finished flight tracker showing a flight](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)](https://blog.colinwaddell.com/user/pages/01.articles/02.flight-tracker/screen-flight-thumb.jpg)
+This is a port of the original Raspberry Pi FlightTracker project, adapted for MicroPython on the Interstate 75 W board.
 
-# Setup
+## Hardware Requirements
+
+- [Pimoroni Interstate 75 W (RP2350)](https://shop.pimoroni.com/products/interstate-75-w)
+- HUB75 LED Matrix Panel (64x32 recommended, other sizes supported)
+- USB-C cable for power and programming
+
+## Features
+
+- Real-time flight tracking using FlightRadar24 data
+- Displays flight callsign, origin/destination airports, and aircraft type
+- Scrolling text for aircraft information
+- Clock and date display when no flights overhead
+- Temperature display with colour-coded values
+- Loading indicator during data fetch
+- Onboard RGB LED status indicator
 
 ## Installation
 
-The previous instructions were written against Debian Buster and can be found [at this commit](https://github.com/ColinWaddell/FlightTracker/blob/44aa282bdc54a897ab72cbd0dc49017f6a11c11a/README.md). People were starting to find the instructions didn't line up with the latest version of Debian Bookworm. These new instructions are less battle-tested than the previous version so if you run into any problems please raise it as an issue.
+### 1. Install Pimoroni MicroPython Firmware
 
-### Installation Guide
+Download the latest Pimoroni MicroPython firmware for Interstate 75 W from:
+https://github.com/pimoroni/interstate75/releases
 
-These instructions will assume that running the Flight Tracker on your Raspberry Pi is the only thing you're going to be doing with the device. The other assumptions are going to be:
+Flash the firmware:
+1. Hold the BOOT button on the Interstate 75 W
+2. Connect USB-C cable to your computer
+3. Release BOOT button - the board appears as a USB drive
+4. Copy the `.uf2` firmware file to the drive
+5. The board will reboot automatically
 
-- You've got your Raspberry Pi set up with Raspbian based on Debian Bookworm 
-- The username of the device is `pi`
-- If you're not using a screen/keyboard attached to the Pi then you've figured out how to remote edit over SSH
+### 2. Copy Files to the Board
 
-### Installation Locations
+Copy all files from this `interstate75` directory to your Interstate 75 W.
 
-For future reference, in this installation process we're going to use the following locations:
+You can use Thonny, rshell, or mpremote:
 
-| Location                                | Purpose                                                             |
-| --------------------------------------- | ------------------------------------------------------------------- |
-| `/home/pi/rpi-rgb-led-matrix`           | RGB Matrix Driver                                                   |
-| `/home/pi/FlightTracker`           | The Flight Tracking software (this repo)                            |
-| `/home/pi/FlightTracker/env`       | The virtual environment we'll install the necessary Python packages  |
-| `/home/pi/FlightTracker/config.py` | Config file for this flight tracking software                       |
+```bash
+# Using mpremote
+mpremote cp -r . :
 
-### First steps
-
-Before installing anything let's ensure our system is up-to-date:
-
-```
-sudo apt-get update
-sudo apt-get dist-upgrade
+# Or using rshell
+rshell -p /dev/ttyACM0 rsync . /pyboard/
 ```
 
-This will take a while on a fresh device as it picks up all its updates.
+### 3. Configure WiFi
 
-### Install the RGB Screen
+Edit `secrets.py` with your WiFi credentials:
 
-1. Assemble the RGB matrix, Pi, and Bonnet as described in [this Adafruit guide](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/overview).
-2. It is recommended that the [solder bridge is added to the HAT](https://learn.adafruit.com/assets/57727) in order to use the Pi's soundcard to drive the device's PWM.
-3. Please [read the official installation instructions](https://learn.adafruit.com/adafruit-rgb-matrix-bonnet-for-raspberry-pi/driving-matrices) for further details before proceeding **but don't run any commands or install anything yet**.
-4. Use the following commands to install the `rgb-matrix` library. Please note the paths used in these instructions are used later in this guide and must be adhered to for everything to make sense.
-
-```
-cd /home/pi
-curl https://raw.githubusercontent.com/adafruit/Raspberry-Pi-Installer-Scripts/main/rgb-matrix.sh > /tmp/rgb-matrix.sh
-sudo bash /tmp/rgb-matrix.sh
+```python
+WIFI_SSID = "YourNetworkName"
+WIFI_PASSWORD = "YourPassword"
 ```
 
-5. If the installation has worked successfully then there should be some demo applications available to run:
+### 4. Configure Location
 
-```
-cd /home/pi/rpi-rgb-led-matrix/examples-api-use
-sudo ./demo --led-rows=32 --led-cols=64 -D0
-```
+Edit `config.py` with your location settings:
 
-### Install this Flight Tracking software
-
-1. Clone this repository:
-
-```
-cd /home/pi/
-git clone https://github.com/ColinWaddell/FlightTracker
-```
-
-2. Head into this repository and create a virtual environment, activate it and install all the dependencies
-
-```
-cd /home/pi/FlightTracker
-python3 -m venv env
-source env/bin/activate
-pip install -r requirements.txt
-```
-
-3. Head into the rgb-matrix library and install the Python library into our virtual environment. These commands assume you are still using the same environment that we activated in the above steps. If not, rerun the `source` command in the `FlightTracker` directory.
-
-```
-cd /home/pi/rpi-rgb-led-matrix/bindings/python
-pip install .
-```
-
-### Configure the Flight Tracking software for your location
-
-These instructions will show you how to create a config file from the command line with `nano` but in reality you can do this however you want.
-
-```
-cd /home/pi/FlightTracker 
-nano config.py
-```
-
-Here is an example config you can copy into that file:
-
-```
+```python
+# Geographic zone for tracking (lat/lon bounds)
 ZONE_HOME = {
-    "tl_y": 56.06403, # Top-Left Latitude (deg)
-    "tl_x": -4.51589, # Top-Left Longitude (deg)
-    "br_y": 55.89088, # Bottom-Right Latitude (deg)
-    "br_x": -4.19694 # Bottom-Right Longitude (deg)
+    "tl_y": 52.0,   # North boundary
+    "tl_x": -2.5,   # West boundary
+    "br_y": 51.0,   # South boundary
+    "br_x": -0.5    # East boundary
 }
-LOCATION_HOME = [
-    55.9074356, # Latitude (deg)
-    -4.3331678, # Longitude (deg)
-    0.01781 # Altitude (km)
-]
-WEATHER_LOCATION = "Glasgow"
-OPENWEATHER_API_KEY = "" # Get an API key from https://openweathermap.org/price
-TEMPERATURE_UNITS = "metric"
-MIN_ALTITUDE = 100
-BRIGHTNESS = 50
-GPIO_SLOWDOWN = 2
-JOURNEY_CODE_SELECTED = "GLA"
-JOURNEY_BLANK_FILLER = " ? "
-HAT_PWM_ENABLED = True
+
+# Your home location [lat, lon, altitude_km]
+LOCATION_HOME = [51.509865, -0.118092, 6371]
+
+# Weather location
+WEATHER_LOCATION = "London"
+
+# Your local airport code to highlight
+JOURNEY_CODE_SELECTED = "LHR"
 ```
 
-To save and exit nano hit `Ctrl-X` followed by `Y`.
+### 5. Run
 
-In reality you'll want to customise `config.py` for your own purposes.
+The tracker starts automatically when the board powers on (if main.py is present).
 
-### Configuration file details 
-
-| Variable                 | Description |
-|--------------------------|-------------|
-| `ZONE_HOME`              | Defines the area within which flights should be tracked. |
-| `LOCATION_HOME`          | Latitude/longitude of your home. |
-| `WEATHER_LOCATION`       | City used to display the temperature. Format: `"City"` or `"City,Province/State,Country"` (e.g., `"Paris"` or `"Paris,Ile-de-France,FR"`). |
-| `OPENWEATHER_API_KEY`    | If provided, enables OpenWeather API. [Get a free key here](https://openweathermap.org/price). *(Optional)* |
-| `TEMPERATURE_UNITS`      | One of `"metric"` or `"imperial"`. Defaults to `"metric"`. |
-| `MIN_ALTITUDE`           | Removes planes below this altitude (in feet). Useful for filtering out planes on the tarmac. |
-| `BRIGHTNESS`             | Range 0–100. Adjusts brightness of the display. |
-| `GPIO_SLOWDOWN`          | Range 0–4. Higher values help reduce flickering on faster hardware (e.g., `2` for Pi Zero 2 W). |
-| `JOURNEY_CODE_SELECTED`  | Three-letter airport code of a local airport to display in **bold**. *(Optional)* |
-| `JOURNEY_BLANK_FILLER`   | Three-letter text used in place of an unknown airport. Defaults to `" ? "`. |
-| `HAT_PWM_ENABLED`        | Enables PWM via Pi’s soundcard. Requires [solder bridge modification](https://learn.adafruit.com/assets/57727). Defaults to `True`. |
-
-
-### Configuring permissions to avoid running as root
-
-Previous versions of the instructions always pointed out to run everything as root for performance reasons but for security I think this is best avoided. Plus the latest version of the GPIO driver and rgb-matrix have strong opinions about who is in charge when running as root.
-
-To avoid running as root and to grant Python permission to set real-time scheduling priorities, run the command:
-
-```
-sudo setcap 'cap_sys_nice=eip' /usr/bin/python3.11 
+Or run manually via Thonny/REPL:
+```python
+import main
+main.main()
 ```
 
-### Running the software manually
-
-The software can now be tested by running it from the command line
+## Display Layout (64x32)
 
 ```
-cd /home/pi/FlightTracker 
-env/bin/python3 flight-tracker.py
++--------------------------------+
+| LHR  ->  JFK          |  15C  |  <- Journey + Temperature
++--------------------------------+
+| BA178 -------- 1/3    | [*]   |  <- Callsign + Counter + Loading
++--------------------------------+
+| Boeing 777-300ER              |  <- Scrolling aircraft type
++--------------------------------+
 ```
 
-To quit tap `Ctrl-C`.
-
-### Running the software on start-up
-
-This repo contains an example `.service` file to allow this software to be easily run on boot. Provided that the same paths have been used in your own installation as these instructions then you shouldn't need to edit this file.
-
+When no flights are overhead:
 ```
-sudo cp /home/pi/FlightTracker/assets/FlightTracker.service /etc/systemd/system/FlightTracker.service
-sudo systemctl daemon-reexec
-sudo systemctl daemon-reload
-sudo systemctl enable FlightTracker.service
-sudo systemctl start FlightTracker.service
++--------------------------------+
+| 14:35                 |  15C  |  <- Clock + Temperature
++--------------------------------+
+|                               |
++--------------------------------+
+| Mon 1/12                      |  <- Date
++--------------------------------+
 ```
 
-Any problems, check the status and logs:
+## Configuration Options
 
-```
-sudo systemctl status FlightTracker.service
-journalctl -u FlightTracker.service -f
-```
+| Option | Description | Default |
+|--------|-------------|---------|
+| `ZONE_HOME` | Geographic bounds for tracking | UK |
+| `LOCATION_HOME` | Your location for distance calc | London |
+| `WEATHER_LOCATION` | City for weather API | London |
+| `OPENWEATHER_API_KEY` | Optional OpenWeather key | None |
+| `TEMPERATURE_UNITS` | "metric" or "imperial" | metric |
+| `MIN_ALTITUDE` | Ignore flights below (feet) | 0 |
+| `BRIGHTNESS` | Display brightness (0-100) | 50 |
+| `JOURNEY_CODE_SELECTED` | Airport code to highlight | LHR |
+| `DISPLAY_TYPE` | Panel size: 32x32, 64x32, etc. | 64x32 |
 
-## Optional
+## Supported Display Sizes
 
-### Loading LED
-An LED can be wired to a GPIO on the Raspberry Pi which can then blink when data is being loaded.
+- 32x32
+- 64x32 (recommended)
+- 64x64
+- 128x64
 
-To enable this add the following to your `config.py`. Adjust `LOADING_LED_GPIO_PIN` to suit your setup.
+## LED Status Indicator
 
-```
-LOADING_LED_ENABLED = True
-LOADING_LED_GPIO_PIN = 25
-```
+The onboard RGB LED indicates system status:
 
-### Rainfall chart
-If weather data is being pulled from my server (as opposed to using `OPENWEATHER_API_KEY`) then you can
-display a chart of rainfall by adding the following to your `config.py`:
+| Colour | Meaning |
+|--------|---------|
+| Blue | No flights / Idle |
+| Green | Flights detected |
+| Yellow | Fetching data |
+| Red (flashing) | WiFi connection error |
 
-```
-RAINFALL_ENABLED = True
-```
+## Differences from Raspberry Pi Version
 
-[![Example Weather Chart](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)](https://raw.githubusercontent.com/ColinWaddell/FlightTracker/refs/heads/master/assets/weather.jpg)
+This port has some differences due to MicroPython limitations:
 
-# License Update:
-As of April 2025, Flight Tracker is released under the GNU General Public License v3.0
+1. **Synchronous data fetching** - No background threads; data is fetched between display updates
+2. **Simplified fonts** - Uses PicoGraphics built-in bitmap fonts instead of BDF fonts
+3. **Direct HTTP requests** - Uses urequests instead of FlightRadar24API library
+4. **No GPIO LED scene** - Uses onboard RGB LED instead
 
-You’re welcome to use, modify, and share the code—just keep it under the same license and include
-proper attribution (retain my copyright and license notice). See LICENSE for details.
+## Troubleshooting
 
-[I had to add this license as folks have started selling these online as their own with zero attribution](https://colinwaddell.com/articles/flight-radar-ripoff). Open-source projects like this are our CVs: they show peers and potential employers what we can do. Passing off someone else’s work as your own robs us of our chance to promote ourselves.
+### WiFi Connection Issues
+- Check SSID and password in `secrets.py`
+- Ensure 2.4GHz network (5GHz not supported)
+- Try power cycling the board
+
+### No Flights Showing
+- Verify your `ZONE_HOME` coordinates are correct
+- Check you have flights in your area (use FlightRadar24 website)
+- Ensure `MIN_ALTITUDE` isn't filtering out all flights
+
+### Display Issues
+- Check panel is connected correctly to HUB75 header
+- Verify `DISPLAY_TYPE` matches your panel
+- Try reducing `BRIGHTNESS` if display looks washed out
+
+## License
+
+GPL v3.0 - See LICENSE file
+
+## Credits
+
+Original FlightTracker project for Raspberry Pi.
+Ported for Pimoroni Interstate 75 W (RP2350).

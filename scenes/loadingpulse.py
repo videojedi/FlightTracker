@@ -1,37 +1,44 @@
+# Loading pulse scene - visual indicator during data fetch
+# Ported from FlightTracker for Interstate 75 W
+
 from utilities.animator import Animator
-from setup import colours
+from setup import colours, screen
 
-# Setup
-BLINKER_POSITION = (63, 0)
-BLINKER_STEPS = 10
-BLINKER_COLOUR = colours.WHITE
+# Layout constants
+LOADING_PULSE_POSITION = (screen.WIDTH - 2, 1)
+LOADING_PULSE_COLOUR = colours.WHITE
 
 
-class LoadingPulseScene(object):
+class LoadingPulseScene:
     def __init__(self):
         super().__init__()
 
-    @Animator.KeyFrame.add(2)
+    @Animator.KeyFrame.add(1)
     def loading_pulse(self, count):
-        reset_count = True
-        if self.overhead.processing:
-            # Calculate the brightness scaler and
-            # ensure it's within a sensible range
-            brightness = (1 - (count / BLINKER_STEPS)) / 2
-            brightness = 0 if (brightness < 0 or brightness > 1) else brightness
-
-            self.canvas.SetPixel(
-                BLINKER_POSITION[0],
-                BLINKER_POSITION[1],
-                brightness * BLINKER_COLOUR.red,
-                brightness * BLINKER_COLOUR.green,
-                brightness * BLINKER_COLOUR.blue,
+        """Flash a pixel to indicate loading activity"""
+        # Only show when processing
+        if not self.overhead.processing:
+            # Clear the indicator
+            black_pen = self.display.create_pen(0, 0, 0)
+            self.display.set_pen(black_pen)
+            self.display.pixel(
+                LOADING_PULSE_POSITION[0],
+                LOADING_PULSE_POSITION[1]
             )
+            return
 
-            # Only count 0 -> (BLINKER_STEPS - 1)
-            reset_count = count == (BLINKER_STEPS - 1)
+        # Pulse on/off
+        if count % 2:
+            pen = self.display.create_pen(
+                LOADING_PULSE_COLOUR.red,
+                LOADING_PULSE_COLOUR.green,
+                LOADING_PULSE_COLOUR.blue
+            )
         else:
-            # Not processing, blank the square
-            self.canvas.SetPixel(BLINKER_POSITION[0], BLINKER_POSITION[1], 0, 0, 0)
+            pen = self.display.create_pen(0, 0, 0)
 
-        return reset_count
+        self.display.set_pen(pen)
+        self.display.pixel(
+            LOADING_PULSE_POSITION[0],
+            LOADING_PULSE_POSITION[1]
+        )

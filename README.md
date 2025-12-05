@@ -13,7 +13,7 @@ Ported for Pimoroni Interstate 75 W by [Richard Burford](https://github.com/vide
 - [Pimoroni Interstate 75 W](https://shop.pimoroni.com/products/interstate-75-w) (RP2350 or RP2040 version)
 - HUB75 LED Matrix Panel (64x32 recommended, other sizes supported)
 - USB-C cable for power and programming
-- Optional: Speaker/buzzer on GP2 for audio notifications
+- Optional: Speaker/buzzer on GP20 for audio notifications
 
 ## Features
 
@@ -100,7 +100,7 @@ MIN_ALTITUDE = 0
 MAX_ALTITUDE = 45000
 
 # Audio pin (optional)
-AUDIO_PIN = 2
+AUDIO_PIN = 20
 ```
 
 ### 5. Run

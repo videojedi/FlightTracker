@@ -1,0 +1,76 @@
+# FlightTracker Configuration Template
+# Copy this file to config.py and edit the values for your setup
+#
+# IMPORTANT: config.py is gitignored - your personal settings stay private!
+
+# =============================================================================
+# Your Location
+# =============================================================================
+LOCATION = {
+    "latitude": 51.5074,      # Your latitude (e.g., London: 51.5074)
+    "longitude": -0.1278,     # Your longitude (e.g., London: -0.1278)
+    "name": "London"          # Display name (for your reference)
+}
+
+# Search radius for flights (in kilometers)
+FLIGHT_RADIUS_KM = 20
+
+# =============================================================================
+# Audio Settings
+# =============================================================================
+# PWM audio pin for bing-bong notifications
+# Set to None to disable audio, or a GPIO number (e.g.20)
+AUDIO_PIN = 20
+
+# =============================================================================
+# Display Settings
+# =============================================================================
+# Display type - change this to match your panel configuration
+# Options: "32x32", "64x32", "64x64", "128x64"
+# Note: Some 64x32 panels require "64x32h" mode (uses 64x64 driver, 32px height)
+DISPLAY_TYPE = "64x32"
+
+# Display brightness (0-100)
+BRIGHTNESS = 50
+
+# =============================================================================
+# Flight Tracking Settings
+# =============================================================================
+# Altitude filter in feet
+MIN_ALTITUDE = 0       # Ignore flights below this altitude
+MAX_ALTITUDE = 45000   # Ignore flights above this (commercial jets cruise ~35,000ft)
+
+# How often to poll for new flight data (in seconds)
+FLIGHT_POLL_INTERVAL = 30
+
+# Airport code to highlight (your local airport)
+JOURNEY_CODE_SELECTED = "LHR"
+
+# Placeholder for missing airport codes
+JOURNEY_BLANK_FILLER = " ? "
+
+# =============================================================================
+# Weather Settings
+# =============================================================================
+# Temperature units: "metric" (Celsius) or "imperial" (Fahrenheit)
+TEMPERATURE_UNITS = "metric"
+
+# Enable rainfall probability display in weather scroll
+RAINFALL_ENABLED = True
+
+# =============================================================================
+# Derived Settings (calculated automatically - don't edit these)
+# =============================================================================
+# Convert radius to approximate degrees (1 degree ~ 111km at equator)
+_radius_deg = FLIGHT_RADIUS_KM / 111.0
+
+# Geographic zone for flight tracking (calculated from location + radius)
+ZONE_HOME = {
+    "tl_y": LOCATION["latitude"] + _radius_deg,   # North
+    "tl_x": LOCATION["longitude"] - _radius_deg,  # West
+    "br_y": LOCATION["latitude"] - _radius_deg,   # South
+    "br_x": LOCATION["longitude"] + _radius_deg   # East
+}
+
+# Home location for distance calculations [lat, lon, altitude_km]
+LOCATION_HOME = [LOCATION["latitude"], LOCATION["longitude"], 6371]  # Earth radius

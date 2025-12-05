@@ -1,6 +1,8 @@
-# Secrets and config (contain credentials)
+# Secrets and config (contain credentials - but NOT templates)
 secrets.py
 config.py
+!secrets.py.template
+!config.py.template
 
 # IDE and editor
 .vscode/

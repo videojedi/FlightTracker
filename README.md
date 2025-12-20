@@ -14,6 +14,15 @@ Ported for Pimoroni Interstate 75 W by [Richard Burford](https://github.com/vide
 - HUB75 LED Matrix Panel (64x32 recommended, other sizes supported)
 - USB-C cable for power and programming
 - Optional: Speaker/buzzer on GP20 for audio notifications
+- Optional: 3D printed enclosure (see below)
+
+## 3D Printed Enclosure
+
+A 3D printable enclosure is available for the FlightTracker:
+
+- **Model file:** [FlightTracker-box.3mf](3d/FlightTracker-box.3mf)
+
+The enclosure is designed to house the Interstate 75 W and a 64x32 LED matrix panel.
 
 ## Features
 

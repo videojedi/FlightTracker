@@ -14,6 +14,7 @@ SMALL = "bitmap6"           # ~5x8 equivalent
 REGULAR = "bitmap8"         # ~6x12 equivalent
 LARGE = "bitmap8"           # ~8x13 equivalent
 LARGE_BOLD = "bitmap8"      # ~8x13B equivalent (no bold in PicoGraphics)
+XLARGE = "bitmap14" # Large outlined font
 
 # Font heights (approximate, for positioning calculations)
 EXTRASMALL_HEIGHT = 6
@@ -21,6 +22,7 @@ SMALL_HEIGHT = 6
 REGULAR_HEIGHT = 8
 LARGE_HEIGHT = 8
 LARGE_BOLD_HEIGHT = 8
+XLARGE_HEIGHT = 14
 
 # Scale factors for fonts
 EXTRASMALL_SCALE = 1
@@ -28,3 +30,4 @@ SMALL_SCALE = 1
 REGULAR_SCALE = 1
 LARGE_SCALE = 1
 LARGE_BOLD_SCALE = 1
+XLARGE_SCALE = 1

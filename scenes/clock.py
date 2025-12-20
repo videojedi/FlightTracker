@@ -7,11 +7,10 @@ import machine
 from utilities.animator import Animator
 from setup import colours, fonts, frames
 
-# Layout constants - matching original project
-# Original uses fonts.regular (6x12) at baseline y=8
-CLOCK_FONT = fonts.REGULAR
-CLOCK_FONT_SCALE = fonts.REGULAR_SCALE
-CLOCK_POSITION = (1, 1)  # PicoGraphics uses top of text, not baseline
+# Layout constants
+CLOCK_FONT = fonts.XLARGE
+CLOCK_FONT_SCALE = fonts.XLARGE_SCALE
+CLOCK_POSITION = (1, 1)
 CLOCK_COLOUR = colours.BLUE_DARK
 
 
@@ -40,7 +39,7 @@ class ClockScene:
         # Get current time
         current_time = self._get_current_time()
 
-        # Only draw if time has changed
+        # Only draw if time has changed (or first draw)
         if self._last_time != current_time:
             # Undraw previous time if different
             if self._last_time is not None:

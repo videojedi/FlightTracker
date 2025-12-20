@@ -32,15 +32,15 @@ WEATHER_RETRIES = 3
 WEATHER_REFRESH_SECONDS = 300  # 5 minutes
 
 # Layout constants - static temperature top right
-TEMPERATURE_FONT = fonts.EXTRASMALL
-TEMPERATURE_FONT_SCALE = fonts.EXTRASMALL_SCALE
-TEMPERATURE_POSITION = (48, 1)
+TEMPERATURE_FONT = fonts.XLARGE
+TEMPERATURE_FONT_SCALE = fonts.XLARGE_SCALE
+TEMPERATURE_POSITION = (38, 1)
 
 # Layout constants - scrolling weather middle row
-SCROLL_FONT = fonts.REGULAR
-SCROLL_FONT_SCALE = fonts.REGULAR_SCALE
-SCROLL_Y_POS = 17  # Moved down 5 pixels
-SCROLL_HEIGHT = 15  # Increased by 5 pixels
+SCROLL_FONT = fonts.XLARGE
+SCROLL_FONT_SCALE = fonts.XLARGE_SCALE
+SCROLL_Y_POS = 24  # Moved down 6 pixels from 18
+SCROLL_HEIGHT = 14  # Height of XLARGE font
 
 # Compass directions for wind
 WIND_DIRECTIONS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]

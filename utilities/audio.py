@@ -3,12 +3,34 @@
 
 from machine import Pin, PWM
 from time import sleep_ms
+import json
 
 # Configuration - which GPIO pin has a speaker/buzzer connected
 try:
     from config import AUDIO_PIN
 except ImportError:
     AUDIO_PIN = 2  # Default to GP2
+
+# Persistent settings file
+SETTINGS_FILE = "audio_settings.json"
+
+
+def _load_settings():
+    """Load audio settings from persistent storage"""
+    try:
+        with open(SETTINGS_FILE, "r") as f:
+            return json.load(f)
+    except:
+        return {"enabled": True}
+
+
+def _save_settings(settings):
+    """Save audio settings to persistent storage"""
+    try:
+        with open(SETTINGS_FILE, "w") as f:
+            json.dump(settings, f)
+    except Exception as e:
+        print(f"Audio: failed to save settings: {e}")
 
 
 class AudioPlayer:
@@ -17,7 +39,10 @@ class AudioPlayer:
     def __init__(self, pin=None):
         self.pin_num = pin if pin is not None else AUDIO_PIN
         self.pwm = None
-        self._enabled = True
+        # Load enabled state from persistent storage
+        settings = _load_settings()
+        self._enabled = settings.get("enabled", True)
+        print(f"Audio: initialized, enabled={self._enabled}")
 
     def _init_pwm(self):
         """Initialize PWM on the audio pin"""
@@ -96,13 +121,25 @@ class AudioPlayer:
             self._cleanup_pwm()
 
     def enable(self):
-        """Enable audio playback"""
+        """Enable audio playback and save setting"""
         self._enabled = True
+        _save_settings({"enabled": True})
+        print("Audio: enabled")
 
     def disable(self):
-        """Disable audio playback"""
+        """Disable audio playback and save setting"""
         self._enabled = False
         self._cleanup_pwm()
+        _save_settings({"enabled": False})
+        print("Audio: disabled")
+
+    def toggle(self):
+        """Toggle audio enabled state and return new state"""
+        if self._enabled:
+            self.disable()
+        else:
+            self.enable()
+        return self._enabled
 
     @property
     def enabled(self):

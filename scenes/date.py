@@ -6,12 +6,14 @@ import machine
 from utilities.animator import Animator
 from setup import colours, fonts, frames
 
-# Layout constants - matching original project
-# Original uses fonts.small (5x8) at baseline y=31
-DATE_FONT = fonts.SMALL
-DATE_FONT_SCALE = fonts.SMALL_SCALE
-DATE_POSITION = (1, 25)  # PicoGraphics uses top of text; 31 - 6 = 25
-DATE_COLOUR = colours.PINK_DARKER  # Original uses PINK_DARKER
+# Layout constants
+DATE_FONT = fonts.REGULAR
+DATE_FONT_SCALE = fonts.REGULAR_SCALE
+DATE_POSITION = (1, 16)  # Below clock (XLARGE is 14px)
+DATE_COLOUR = colours.PINK_DARKER
+
+# Day names
+DAYS_OF_WEEK = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
 
 
 class DateScene:
@@ -20,17 +22,18 @@ class DateScene:
         self._last_date = None
 
     def _get_current_date(self):
-        """Get current date as string matching original format: d-m-YYYY"""
+        """Get current date as string with day of week: Day d/m"""
         rtc = machine.RTC()
         dt = rtc.datetime()
         # datetime format: (year, month, day, weekday, hour, minute, second, subsecond)
-        year = dt[0]
         month = dt[1]
         day = dt[2]
-        return f"{day}-{month}-{year}"
+        weekday = dt[3]  # 0=Monday, 6=Sunday
+        day_name = DAYS_OF_WEEK[weekday]
+        return f"{day_name} {day}/{month}"
 
-    @Animator.KeyFrame.add(0)
-    def date_display(self):
+    @Animator.KeyFrame.add(1)
+    def date_display(self, count):
         """Draw date when no flight data"""
         if len(self._data):
             # Ensure redraw when there's new data
@@ -40,7 +43,7 @@ class DateScene:
         # Get current date
         current_date = self._get_current_date()
 
-        # Only draw if date has changed
+        # Only draw if date has changed (or first draw)
         if self._last_date != current_date:
             # Undraw previous date if different
             if self._last_date is not None:
